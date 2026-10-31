@@ -3,6 +3,9 @@ pandas
 pydantic
 pydantic-settings
 email-validator
+fastapi
+uvicorn
+httpx
 pytest
 pytest-asyncio
 anyio
