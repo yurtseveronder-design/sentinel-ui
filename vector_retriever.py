@@ -28,8 +28,11 @@ class VectorRetriever:
         except Exception:
             pass
 
-    def add_documents(self, documents):
-        for doc in documents:
+    def add_documents(self, *args, **kwargs):
+        docs = args[0] if args else kwargs.get("documents", [])
+        if not isinstance(docs, list):
+            docs = [docs]
+        for doc in docs:
             if isinstance(doc, dict):
                 self.documents.append(doc)
             else:
