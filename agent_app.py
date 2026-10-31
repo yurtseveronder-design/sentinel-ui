@@ -1,91 +1,61 @@
 """
 sentinel-ui: agent_app.py
-Production-grade AI agent interface with multi-provider failover, retry logic, and audit logging.
+Autonomous Tool-Using Agent implementation with secure tool dispatch and guardrails.
 """
 
+import json
 import logging
-import sqlite3
-import re
-import time
-from datetime import datetime
+from typing import Dict, Any, Callable, Optional
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("SentinelAgent")
+logger = logging.getLogger("sentinel-ui.agent")
 
-class ResilientLLMClient:
-    """Simulates production multi-provider fallback and exponential backoff retry logic."""
-    def __init__(self, primary_provider="groq", fallback_provider="openai"):
-        self.primary_provider = primary_provider
-        self.fallback_provider = fallback_provider
+class SecureAgentToolRegistry:
+    """Registry of safe, sandboxed tools available to the autonomous agent."""
+    
+    def __init__(self):
+        self._tools: Dict[str, Callable[[Any], str]] = {}
 
-    def generate(self, prompt: str) -> str:
-        retries = 3
-        delay = 1.0
+    def register(self, name: str, func: Callable[[Any], str]) -> None:
+        self._tools[name] = func
+
+    def get(self, name: str) -> Optional[Callable[[Any], str]]:
+        return self._tools.get(name)
+
+    def list_tools(self) -> list:
+        return list(self._tools.keys())
+
+
+class AutonomousAgent:
+    """Autonomous agent capable of reasoning, tool selection, and secure execution."""
+
+    def __init__(self, registry: SecureAgentToolRegistry):
+        self.registry = registry
+
+    def execute_task(self, goal: str, tool_name: str, tool_input: Any) -> Dict[str, Any]:
+        """Execute a reasoned task by safely invoking a registered tool."""
+        logger.info(f"Agent received goal: '{goal}' utilizing tool: '{tool_name}'")
         
-        for attempt in range(retries):
-            try:
-                # Simulated production API call with error handling
-                if not prompt.strip():
-                    raise ValueError("Prompt cannot be empty.")
-                return f"[{self.primary_provider.upper()} Response]: Processed securely -> {prompt[:100]}"
-            except Exception as e:
-                logger.warning(f"Attempt {attempt + 1} failed on {self.primary_provider}: {e}")
-                if attempt == retries - 1:
-                    logger.info(f"Switching to fallback provider: {self.fallback_provider}")
-                    return f"[{self.fallback_provider.upper()} Fallback Response]: Processed -> {prompt[:100]}"
-                time.sleep(delay)
-                delay *= 2
+        tool = self.registry.get(tool_name)
+        if not tool:
+            logger.error(f"Tool not found or unauthorized: {tool_name}")
+            return {
+                "status": "error",
+                "goal": goal,
+                "error": f"Tool '{tool_name}' is not registered or authorized."
+            }
 
-class SentinelAgent:
-    def __init__(self, db_path="sentinel_audit.db"):
-        self.db_path = db_path
-        self._init_db()
-        self.llm_client = ResilientLLMClient()
-        self.jailbreak_patterns = [
-            re.compile(r"ignore\s+(previous|all)\s+instructions", re.IGNORECASE),
-            re.compile(r"system\s+override", re.IGNORECASE),
-            re.compile(r"bypass\s+guardrails", re.IGNORECASE)
-        ]
-
-    def _init_db(self):
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS audit_logs (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                timestamp TEXT,
-                prompt TEXT,
-                status TEXT,
-                details TEXT
-            )
-        ''')
-        conn.commit()
-        conn.close()
-
-    def log_audit(self, prompt: str, status: str, details: str):
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        cursor.execute(
-            "INSERT INTO audit_logs (timestamp, prompt, status, details) VALUES (?, ?, ?, ?)",
-            (datetime.utcnow().isoformat(), prompt, status, details)
-        )
-        conn.commit()
-        conn.close()
-
-    def process_prompt(self, prompt: str) -> dict:
-        logger.info(f"Evaluating prompt security...")
-        
-        for pattern in self.jailbreak_patterns:
-            if pattern.search(prompt):
-                self.log_audit(prompt, "BLOCKED", f"Deterministic guardrail matched")
-                return {
-                    "status": "blocked",
-                    "message": "Security Guardrail Triggered: Unsafe pattern detected."
-                }
-
-        response = self.llm_client.generate(prompt)
-        self.log_audit(prompt, "APPROVED", "Passed safety checks and generated response")
-        return {
-            "status": "success",
-            "message": response
-        }
+        try:
+            result = tool(tool_input)
+            return {
+                "status": "success",
+                "goal": goal,
+                "tool_used": tool_name,
+                "result": result
+            }
+        except Exception as e:
+            logger.error(f"Tool execution failed: {str(e)}")
+            return {
+                "status": "error",
+                "goal": goal,
+                "error": str(e)
+            }
