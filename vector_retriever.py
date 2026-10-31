@@ -21,6 +21,21 @@ class VectorRetriever:
             {"id": "doc3", "text": "Local JSON persistence provides transparency and eliminates heavy database dependencies."}
         ]
 
+    def _save_documents(self):
+        try:
+            with open(self.store_path, "w") as f:
+                json.dump(self.documents, f, indent=2)
+        except Exception:
+            pass
+
+    def add_documents(self, documents):
+        for doc in documents:
+            if isinstance(doc, dict):
+                self.documents.append(doc)
+            else:
+                self.documents.append({"id": str(len(self.documents) + 1), "text": str(doc)})
+        self._save_documents()
+
     def _text_to_vector(self, text):
         words = re.findall(r'\w+', text.lower())
         vector = {}
