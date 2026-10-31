@@ -1,3 +1,4 @@
+
 import math
 import re
 import json
@@ -62,3 +63,6 @@ class VectorRetriever:
 
         scored_docs.sort(key=lambda x: x[0], reverse=True)
         return [doc for score, doc in scored_docs[:top_k]]
+
+# Backward compatibility alias for any tests using the legacy name
+VectorRAGRetriever = VectorRetriever
