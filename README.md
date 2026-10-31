@@ -1,38 +1,15 @@
-\# 🛡️ Sentinel-UI: Enterprise AI Security \& Testing Framework
+# Sentinel-UI
 
+A lightweight, local-first UI and RAG tool built to experiment with AI guardrails and retrieval systems.
 
+## What it does
+* **Local RAG Retrieval**: Loads documents from a local JSON store and scores text relevance for quick lookups.
+* **Streamlit Interface**: Provides a simple, clean UI to interact with the system.
+* **Environment Safe**: Designed with strict `.gitignore` rules to keep local credentials secure.
 
-`sentinel-ui` is a robust, production-ready framework designed for automated API testing, deterministic AI guardrail enforcement, and persistent semantic vector RAG validation.
+## Getting Started
 
-
-
-\## 🚀 Key Architectural Features
-
-
-
-\- \*\*Deterministic Security Guardrails\*\*: Multi-layered regex and pattern matching to intercept prompt injections, system overrides, and jailbreaks before they reach downstream models.
-
-\- \*\*Resilient Multi-Provider Client\*\*: Automated error recovery, exponential backoff retries, and seamless failover between primary and secondary LLM providers.
-
-\- \*\*Persistent Vector Retrieval Pipeline\*\*: Disk-backed semantic vector store utilizing custom cosine similarity scoring for high-fidelity RAG evaluation.
-
-\- \*\*SQLite Audit Logging\*\*: Complete traceability and logging of all agent interactions and security block events.
-
-\- \*\*Comprehensive Test Suite\*\*: Automated unit and integration testing via `pytest`.
-
-
-
-\## 📦 Installation
-
-
-
-Clone the repository and install in editable mode:
-
-```bash
-
-git clone \[https://github.com/yurtseveronder-design/sentinel-ui.git](https://github.com/yurtseveronder-design/sentinel-ui.git)
-
-cd sentinel-ui
-
-pip install -e .
-
+1. **Clone the repository:**
+   ```bash
+   git clone [https://github.com/yurtseveronder-design/sentinel-ui.git](https://github.com/yurtseveronder-design/sentinel-ui.git)
+   cd sentinel-ui
