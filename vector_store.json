@@ -4,9 +4,13 @@
     "The authorization token expires after 3600 seconds of inactivity.",
     "Guardrails intercept malicious prompt injection attacks before reaching the core LLM.",
     "The authorization token expires after 3600 seconds of inactivity.",
+    "Guardrails intercept malicious prompt injection attacks before reaching the core LLM.",
+    "The authorization token expires after 3600 seconds of inactivity.",
     "Guardrails intercept malicious prompt injection attacks before reaching the core LLM."
   ],
   "metadata": [
+    "id_token",
+    "id_security",
     "id_token",
     "id_security",
     "id_token",
