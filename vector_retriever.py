@@ -1,45 +1,55 @@
-import json
-import os
-from typing import List, Dict
+import math
+import re
 
 class VectorRetriever:
-    def __init__(self, store_path: str = "vector_store.json"):
-        self.store_path = store_path
-        self.documents = self._load_store()
+    def __init__(self, documents=None):
+        # Sample structured knowledge base for AI security and guardrails
+        self.documents = documents or [
+            {"id": "doc1", "text": "AI guardrails prevent prompt injection and unauthorized data exfiltration."},
+            {"id": "doc2", "text": "RAG systems retrieve relevant context from a vector database before generation."},
+            {"id": "doc3", "text": "LLM evaluation requires systematic testing of toxicity, latency, and accuracy."},
+            {"id": "doc4", "text": "Test automation frameworks validate API endpoints and response schemas efficiently."}
+        ]
+
+    def _text_to_vector(self, text):
+        # Convert text into a simple term-frequency vector dictionary
+        words = re.findall(r'\w+', text.lower())
+        vector = {}
+        for word in words:
+            vector[word] = vector.get(word, 0) + 1
+        return vector
+
+    def _cosine_similarity(self, vec1, vec2):
+        # Calculate true cosine similarity between two text vectors
+        intersection = set(vec1.keys()) & set(vec2.keys())
+        numerator = sum([vec1[x] * vec2[x] for x in intersection])
         
-    def _load_store(self) -> List[Dict[str, str]]:
-        """Loads documents from the local JSON vector store safely."""
-        if not os.path.exists(self.store_path):
-            return []
-        try:
-            with open(self.store_path, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except Exception as e:
-            print(f"Error loading vector store: {e}")
-            return []
-            
-    def search(self, query: str, top_k: int = 3) -> List[Dict[str, str]]:
-        """Performs keyword and semantic relevance scoring to retrieve top documents."""
+        sum1 = sum([vec1[x] ** 2 for x in vec1.keys()])
+        sum2 = sum([vec2[x] ** 2 for x in vec2.keys()])
+        
+        denominator = math.sqrt(sum1) * math.sqrt(sum2)
+        if not denominator:
+            return 0.0
+        return float(numerator) / denominator
+
+    def search(self, query, top_k=2):
         if not query.strip() or not self.documents:
             return []
-            
-        query_terms = set(query.lower().split())
+
+        query_vec = self._text_to_vector(query)
         scored_docs = []
-        
+
         for doc in self.documents:
-            text = doc.get("text", "").lower()
-            # Calculate simple token overlap score as a reliable fallback metric
-            score = sum(1 for term in query_terms if term in text)
-            if score > 0:
+            doc_vec = self._text_to_vector(doc.get("text", ""))
+            score = self._cosine_similarity(query_vec, doc_vec)
+            if score > 0.0:
                 scored_docs.append((score, doc))
-                
-        # Sort by relevance score descending
+
+        # Sort by cosine similarity score descending
         scored_docs.sort(key=lambda x: x[0], reverse=True)
-        
-        # Return top_k unique documents
-        results = [doc for score, doc in scored_docs[:top_k]]
-        return results
+        return [doc for score, doc in scored_docs[:top_k]]
 
 if __name__ == "__main__":
     retriever = VectorRetriever()
-    print(f"Loaded {len(retriever.documents)} documents from store.")
+    results = retriever.search("How do guardrails stop prompt injection?")
+    print("Vector Search Results:", results)
