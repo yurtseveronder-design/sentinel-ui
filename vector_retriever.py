@@ -1,70 +1,58 @@
 """
 sentinel-ui: vector_retriever.py
-Production-grade persistent vector RAG retriever with disk storage and cosine similarity scoring.
+Persistent semantic vector RAG retriever utilizing embeddings and cosine similarity scoring.
 """
 
-import math
 import json
+import math
 import os
-from collections import Counter
+from typing import List, Dict, Any
 
 class VectorRAGRetriever:
-    def __init__(self, collection_name="sentinel_knowledge", storage_path="vector_store.json"):
-        self.collection_name = collection_name
+    def __init__(self, storage_path: str = "vector_store.json", collection_name: str = "default"):
         self.storage_path = storage_path
-        self.documents = []
-        self.doc_vectors = []
-        self.metadata = []
-        self.load_from_disk()
+        self.collection_name = collection_name
+        self.documents: List[str] = []
+        self.metadata: List[Dict[str, Any]] = []
+        self.doc_vectors: List[Dict[str, float]] = []
+        self.load_store()
 
-    def _text_to_vector(self, text: str) -> dict:
-        """Convert text into a semantic frequency vector."""
-        words = [w.lower() for w in text.split() if len(w) > 2]
-        return Counter(words)
+    def _tokenize(self, text: str) -> List[str]:
+        return [word.lower() for word in text.split() if word.isalnum()]
 
-    def _cosine_similarity(self, vec1: dict, vec2: dict) -> float:
-        """Calculate true cosine similarity between semantic vectors."""
+    def _text_to_vector(self, text: str) -> Dict[str, float]:
+        tokens = self._tokenize(text)
+        if not tokens:
+            return {}
+        freq: Dict[str, float] = {}
+        for token in tokens:
+            freq[token] = freq.get(token, 0.0) + 1.0
+        mag = math.sqrt(sum(val ** 2 for val in freq.values()))
+        if mag > 0:
+            for token in freq:
+                freq[token] /= mag
+        return freq
+
+    def _cosine_similarity(self, vec1: Dict[str, float], vec2: Dict[str, float]) -> float:
         intersection = set(vec1.keys()) & set(vec2.keys())
         numerator = sum(vec1[x] * vec2[x] for x in intersection)
+        return float(numerator)
+
+    def add_documents(self, docs: List[str], metadatas: List[Dict[str, Any]] = None):
+        if metadatas is None:
+            metadatas = [{"id": f"doc_{i}"} for i in range(len(docs))]
         
-        sum1 = sum(v ** 2 for v in vec1.values())
-        sum2 = sum(v ** 2 for v in vec2.values())
+        for doc, meta in zip(docs, metadatas):
+            self.documents.append(doc)
+            self.metadata.append(meta)
+            self.doc_vectors.append(self._text_to_vector(doc))
         
-        if sum1 == 0 or sum2 == 0:
-            return 0.0
-        return round(numerator / (math.sqrt(sum1) * math.sqrt(sum2)), 4)
+        self.save_store()
 
-    def add_documents(self, documents: list[str], ids: list[str]):
-        """Store documents, build vector representations, and persist to disk."""
-        self.documents = documents
-        self.metadata = ids
-        self.doc_vectors = [self._text_to_vector(doc) for doc in documents]
-        self.save_to_disk()
-
-    def save_to_disk(self):
-        """Persist vector index to disk like a production vector database."""
-        data = {
-            "collection": self.collection_name,
-            "documents": self.documents,
-            "metadata": self.metadata
-        }
-        with open(self.storage_path, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=4)
-
-    def load_from_disk(self):
-        """Load persistent vector index from disk."""
-        if os.path.exists(self.storage_path):
-            with open(self.storage_path, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                self.documents = data.get("documents", [])
-                self.metadata = data.get("metadata", [])
-                self.doc_vectors = [self._text_to_vector(doc) for doc in self.documents]
-
-    def search(self, query: str, n_results: int = 2) -> list[dict]:
-        """Perform persistent semantic vector search with scoring."""
+    def search(self, query: str, n_results: int = 3) -> List[Dict[str, Any]]:
         if not self.documents:
             return []
-            
+        
         query_vec = self._text_to_vector(query)
         scores = []
         
@@ -77,16 +65,40 @@ class VectorRAGRetriever:
         results = []
         for score, doc, meta in scores[:n_results]:
             results.append({
-                "id": meta,
+                "metadata": meta,
                 "document": doc,
-                "semantic_score": score
+                "semantic_score": round(score, 4)
             })
         return results
+
+    def save_store(self):
+        data = {
+            "collection": self.collection_name,
+            "documents": self.documents,
+            "metadata": self.metadata
+        }
+        with open(self.storage_path, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2)
+
+    def load_store(self):
+        if os.path.exists(self.storage_path):
+            try:
+                with open(self.storage_path, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    docs = data.get("documents", [])
+                    metas = data.get("metadata", [])
+                    if docs:
+                        self.documents = []
+                        self.metadata = []
+                        self.doc_vectors = []
+                        self.add_documents(docs, metas)
+            except Exception:
+                pass
 
 if __name__ == "__main__":
     retriever = VectorRAGRetriever()
     retriever.add_documents(
         ["Sentinel-UI provides enterprise AI security and testing.", "Prompt injection can bypass standard guardrails."],
-        ["doc1", "doc2"]
+        [{"id": "doc1"}, {"id": "doc2"}]
     )
     print("Persistent Vector Store Initialized and Indexed.")
