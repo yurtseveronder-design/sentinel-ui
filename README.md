@@ -1,15 +1,20 @@
 # Sentinel-UI
 
-A lightweight, local-first UI and RAG tool built to experiment with AI guardrails and retrieval systems.
+A lightweight AI security guardrail and semantic retrieval interface built with Python and Streamlit.
 
-## What it does
-* **Local RAG Retrieval**: Loads documents from a local JSON store and scores text relevance for quick lookups.
-* **Streamlit Interface**: Provides a simple, clean UI to interact with the system.
-* **Environment Safe**: Designed with strict `.gitignore` rules to keep local credentials secure.
+## 🛠️ Current Architecture & Features
+* **Semantic Vector Retrieval:** Uses custom Python-based term frequency vectors and mathematical cosine similarity scoring to match user queries against knowledge bases.
+* **Local Data Store:** Implements a transparent, file-based local JSON store (`vector_store.json`) for data persistence rather than an external vector database.
+* **Security & Guardrails:** Validates inputs against common prompt injection and unauthorized data exfiltration patterns.
+* **Testing:** Includes Pytest units for deterministic guardrail checks.
+
+---
+
+## 🚧 Scope & Limitations
+* Designed as a focused portfolio project demonstrating practical AI security concepts and custom math implementation.
+* Not built for massive enterprise-scale embedding clusters; optimized for local development and transparency.
 
 ## Getting Started
-
-1. **Clone the repository:**
+1. Install dependencies:
    ```bash
-   git clone [https://github.com/yurtseveronder-design/sentinel-ui.git](https://github.com/yurtseveronder-design/sentinel-ui.git)
-   cd sentinel-ui
+   pip install -r requirements.txt
