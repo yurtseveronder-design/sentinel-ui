@@ -22,7 +22,7 @@ jobs:
     - name: Install Dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install email-validator pydantic-settings pytest
+        pip install pydantic pydantic-settings email-validator pytest anyio pytest-html pytest-metadata requests
         pip install .
 
     - name: Run Pytest Suite
