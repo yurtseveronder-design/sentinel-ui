@@ -1,4 +1,4 @@
-name: Sentinel-UI CI Pipeline
+name: SentinelUI Security CI
 
 on:
   push:
@@ -22,9 +22,9 @@ jobs:
     - name: Install Dependencies
       run: |
         python -m pip install --upgrade pip
+        pip install email-validator pydantic-settings pytest
         pip install -e .
-        pip install email-validator pytest pydantic-settings
 
-    - name: Run Pytest Test Suite
+    - name: Run Pytest Suite
       run: |
         python -m pytest -v
