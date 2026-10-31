@@ -1,11 +1,10 @@
-
 import math
 import re
 import json
 import os
 
 class VectorRetriever:
-    def __init__(self, store_path="vector_store.json"):
+    def __init__(self, store_path="vector_store.json", *args, **kwargs):
         self.store_path = store_path
         self.documents = self._load_documents()
 
@@ -64,5 +63,5 @@ class VectorRetriever:
         scored_docs.sort(key=lambda x: x[0], reverse=True)
         return [doc for score, doc in scored_docs[:top_k]]
 
-# Backward compatibility alias for any tests using the legacy name
+# Backward compatibility alias
 VectorRAGRetriever = VectorRetriever
