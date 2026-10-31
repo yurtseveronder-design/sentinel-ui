@@ -12,7 +12,9 @@ class VectorRetriever:
         if os.path.exists(self.store_path):
             try:
                 with open(self.store_path, "r") as f:
-                    return json.load(f)
+                    data = json.load(f)
+                    if isinstance(data, list):
+                        return data
             except Exception:
                 pass
         return [
@@ -40,12 +42,20 @@ class VectorRetriever:
         self._save_documents()
 
     def append(self, doc):
-        """Allows tests to call retriever.append(doc) directly."""
         if isinstance(doc, dict):
             self.documents.append(doc)
         else:
             self.documents.append({"id": str(len(self.documents) + 1), "text": str(doc)})
         self._save_documents()
+
+    def __iter__(self):
+        return iter(self.documents)
+
+    def __len__(self):
+        return len(self.documents)
+
+    def __getitem__(self, index):
+        return self.documents[index]
 
     def _text_to_vector(self, text):
         words = re.findall(r'\w+', text.lower())
