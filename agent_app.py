@@ -1,10 +1,11 @@
 """
 sentinel-ui: agent_app.py
-Core agent execution module with built-in security guardrails and audit logging.
+Security-hardened agent execution module with deterministic regex guardrails and SQLite audit logging.
 """
 
 import logging
 import sqlite3
+import re
 from datetime import datetime
 
 logging.basicConfig(level=logging.INFO)
@@ -14,6 +15,14 @@ class SentinelAgent:
     def __init__(self, db_path="sentinel_audit.db"):
         self.db_path = db_path
         self._init_db()
+        # Compile deterministic regex patterns for prompt injection and jailbreaks
+        self.jailbreak_patterns = [
+            re.compile(r"ignore\s+(previous|all)\s+instructions", re.IGNORECASE),
+            re.compile(r"system\s+override", re.IGNORECASE),
+            re.compile(r"bypass\s+guardrails", re.IGNORECASE),
+            re.compile(r"reveal\s+(system|hidden)\s+prompt", re.IGNORECASE),
+            re.compile(r"act\s+as\s+an\s+unrestricted", re.IGNORECASE)
+        ]
 
     def _init_db(self):
         """Ensure audit logging table exists."""
@@ -44,25 +53,25 @@ class SentinelAgent:
 
     def process_prompt(self, prompt: str) -> dict:
         """
-        Process incoming prompts with basic guardrail validation.
+        Process incoming prompts with deterministic regex guardrail validation.
         """
         logger.info(f"Processing prompt: {prompt[:50]}...")
         
-        # Simple heuristic check for prompt injection keywords
-        jailbreak_triggers = ["ignore previous instructions", "system override", "bypass"]
-        if any(trigger in prompt.lower() for trigger in jailbreak_triggers):
-            self.log_audit(prompt, "BLOCKED", "Potential prompt injection detected")
-            return {
-                "status": "blocked",
-                "message": "Security Guardrail Triggered: Unsafe prompt pattern detected."
-            }
+        # Evaluate against deterministic security rules
+        for pattern in self.jailbreak_patterns:
+            if pattern.search(prompt):
+                self.log_audit(prompt, "BLOCKED", f"Deterministic guardrail matched: {pattern.pattern}")
+                return {
+                    "status": "blocked",
+                    "message": "Security Guardrail Triggered: Malicious prompt pattern detected via deterministic filters."
+                }
 
-        self.log_audit(prompt, "APPROVED", "Passed safety checks")
+        self.log_audit(prompt, "APPROVED", "Passed deterministic safety checks")
         return {
             "status": "success",
-            "message": f"Processed successfully: Echo -> {prompt}"
+            "message": f"Processed successfully: Response generated for query."
         }
 
 if __name__ == "__main__":
     agent = SentinelAgent()
-    print("SentinelAgent initialized successfully.")
+    print("SentinelAgent initialized with deterministic guardrails.")
