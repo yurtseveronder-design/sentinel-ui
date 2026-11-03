@@ -1,20 +1,25 @@
-# Sentinel-UI
+# Sentinel UI
 
-A lightweight AI security guardrail and semantic retrieval interface built with Python and Streamlit.
+An agentic interface and utility toolkit designed for vector retrieval, local model management, and interactive AI experimentation.
 
-## 🛠️ Current Architecture & Features
-* **Semantic Vector Retrieval:** Uses custom Python-based term frequency vectors and mathematical cosine similarity scoring to match user queries against knowledge bases.
-* **Local Data Store:** Implements a transparent, file-based local JSON store (`vector_store.json`) for data persistence rather than an external vector database.
-* **Security & Guardrails:** Validates inputs against common prompt injection and unauthorized data exfiltration patterns.
-* **Testing:** Includes Pytest units for deterministic guardrail checks.
+## What It Solves
+When building with local or agentic AI models, you need a straightforward command center to handle vector lookups, prompt toolkits, and autonomous loops without getting bogged down in heavy, complex UI frameworks.
 
----
+## Core Features
+* **Agentic Workflows (`agentic-flow/`):** Implements autonomous loops and task handling.
+* **Prompt Engineering Toolkit (`PromptEngineering-toolkit/`):** Modular templates and utilities for managing prompts.
+* **Vector Retrieval Utilities (`utils/`):** Custom embedding and retrieval functions built for local performance.
+* **Automated Testing & CI/CD:** Verified and tested continuously via GitHub Actions workflows.
 
-## 🚧 Scope & Limitations
-* Designed as a focused portfolio project demonstrating practical AI security concepts and custom math implementation.
-* Not built for massive enterprise-scale embedding clusters; optimized for local development and transparency.
+## Project Structure
+* `agentic-flow/`: Core autonomous agent logic and execution loops.
+* `PromptEngineering-toolkit/`: Reusable prompt templates and formatting tools.
+* `utils/`: Helper scripts for vector processing and environment handling.
+* `tests/`: Automated test suite for local validation.
+* `.github/workflows/`: CI pipeline configuration.
 
-## Getting Started
-1. Install dependencies:
+## Quick Start
+1. Clone the repository and configure your `.env` file using `.env.example`.
+2. Install dependencies and run the test suite:
    ```bash
-   pip install -r requirements.txt
+   python -m pytest -v
