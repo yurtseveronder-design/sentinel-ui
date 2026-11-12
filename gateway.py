@@ -37,7 +37,7 @@ async def security_and_logging_middleware(request: Request, call_next):
         )
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            content={"error": "Internal gateway error", "details": str(exc)}
+            content={"error": "Internal gateway error"}
         )
 
 @app.get("/health")

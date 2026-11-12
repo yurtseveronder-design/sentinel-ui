@@ -18,6 +18,14 @@ When building with local or agentic AI models, you need a straightforward comman
 * `tests/`: Automated test suite for local validation.
 * `.github/workflows/`: CI pipeline configuration.
 
+## Gateway authentication
+`gateway.py` protects `/api/v1/secure-inference` with an API key (`x-api-key` header) or an HS256 JWT (`Authorization: Bearer ...`). Credentials are never stored in the code; set them as environment variables (see `.env.example`):
+
+* `SENTINEL_API_KEYS`: comma-separated accepted API keys.
+* `SENTINEL_JWT_SECRET`: signing secret for JWTs.
+
+If a variable is unset, that method rejects every request. `SecurityManager.create_jwt_token()` issues tokens for local use and tests.
+
 ## Quick Start
 1. Clone the repository and configure your `.env` file using `.env.example`.
 2. Install dependencies and run the test suite:
