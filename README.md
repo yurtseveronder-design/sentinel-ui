@@ -26,6 +26,16 @@ When building with local or agentic AI models, you need a straightforward comman
 
 If a variable is unset, that method rejects every request. `SecurityManager.create_jwt_token()` issues tokens for local use and tests.
 
+## Delegating to ai-sentinel
+
+By default `gateway.py` uses a small built-in prompt-injection check. Point it at the detection engine and it delegates instead:
+
+* `AI_SENTINEL_URL`: base URL of [ai-sentinel](https://github.com/yurtseveronder-design/ai-sentinel), for example `http://localhost:8000`.
+* `AI_SENTINEL_API_KEY`: key sent to ai-sentinel as `X-API-Key`.
+* `AI_SENTINEL_TIMEOUT`: seconds to wait (default `3`).
+
+The response's `guardrail` field says which engine decided (`ai-sentinel` or `local`) and includes the semantic analysis when ai-sentinel is running with [sentinel-semantic](https://github.com/yurtseveronder-design/sentinel-semantic). If ai-sentinel is unreachable the gateway falls back to the local check; it never lets a request through unchecked.
+
 ## Quick Start
 1. Clone the repository and configure your `.env` file using `.env.example`.
 2. Install dependencies and run the test suite:

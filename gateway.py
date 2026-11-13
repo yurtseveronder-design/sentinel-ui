@@ -5,6 +5,7 @@ Live production API gateway with authentication, security guardrails, and struct
 
 from fastapi import FastAPI, Header, HTTPException, Request, status
 from fastapi.responses import JSONResponse
+import sentinel_client
 from auth import SecurityManager
 from logger import EnterpriseErrorHandler
 
@@ -48,6 +49,7 @@ async def health_check():
 @app.post("/api/v1/secure-inference")
 async def secure_inference(
     payload: dict,
+    request: Request,
     x_api_key: str = Header(None),
     authorization: str = Header(None)
 ):
@@ -74,9 +76,22 @@ async def secure_inference(
             detail="Unauthorized: Valid API Key or JWT token required"
         )
         
-    # 2. Check for Prompt Injection / Guardrails
+    # 2. Prompt-injection guardrail: delegate to ai-sentinel when configured, otherwise
+    #    (or if it is unreachable) use the built-in check.
     prompt = payload.get("prompt", "")
-    if "ignore previous instructions" in prompt.lower() or "system prompt" in prompt.lower():
+    guardrail = {"source": "local"}
+    verdict = sentinel_client.scan(prompt, request_id=request.headers.get("x-request-id")) if sentinel_client.enabled() else None
+    if verdict is not None:
+        blocked = verdict.get("action") == "BLOCK"
+        guardrail = {
+            "source": "ai-sentinel",
+            "risk_score": verdict.get("risk_score"),
+            "semantic": verdict.get("semantic"),
+        }
+    else:
+        blocked = "ignore previous instructions" in prompt.lower() or "system prompt" in prompt.lower()
+
+    if blocked:
         EnterpriseErrorHandler.log_api_failure(
             endpoint="/api/v1/secure-inference",
             method="POST",
@@ -88,9 +103,10 @@ async def secure_inference(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Security Violation: Prompt injection pattern detected and blocked."
         )
-        
+
     return {
         "status": "success",
         "message": "Inference request passed security guardrails.",
-        "processed_prompt": prompt
+        "processed_prompt": prompt,
+        "guardrail": guardrail,
     }
