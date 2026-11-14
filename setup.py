@@ -10,7 +10,8 @@ setup(
     version="1.0.0",
     description="Professional enterprise AI security guardrails, vector RAG, and testing toolkit",
     author="Onder Yurtsever",
-    packages=find_packages(),
+    packages=find_packages(exclude=["tests*"]),
+    py_modules=["gateway", "auth", "logger", "sentinel_client", "config", "schemas"],
     python_requires=">=3.10",
     install_requires=[
         "pydantic>=2.0.0",

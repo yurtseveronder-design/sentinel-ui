@@ -34,7 +34,7 @@ By default `gateway.py` uses a small built-in prompt-injection check. Point it a
 * `AI_SENTINEL_API_KEY`: key sent to ai-sentinel as `X-API-Key`.
 * `AI_SENTINEL_TIMEOUT`: seconds to wait (default `3`).
 
-The response's `guardrail` field says which engine decided (`ai-sentinel` or `local`) and includes the semantic analysis when ai-sentinel is running with [sentinel-semantic](https://github.com/yurtseveronder-design/sentinel-semantic). If ai-sentinel is unreachable the gateway falls back to the local check; it never lets a request through unchecked.
+The response's `guardrail` field says which engine decided (`ai-sentinel` or `local`) and includes the semantic analysis when ai-sentinel is running with [sentinel-semantic](https://github.com/yurtseveronder-design/sentinel-semantic). **Fail closed:** once `AI_SENTINEL_URL` is set, ai-sentinel is the only authority. If it is unreachable, times out, or answers 401, 429 or 5xx, the gateway answers `503` and refuses the request. The small local check runs only when `AI_SENTINEL_URL` is unset (standalone mode) and is far weaker than ai-sentinel; do not rely on it. Request bodies over `SENTINEL_UI_MAX_BODY_BYTES` (default 65536) get `413`. Logs record prompts as length and a short hash only.
 
 ## Quick Start
 1. Clone the repository and configure your `.env` file using `.env.example`.
