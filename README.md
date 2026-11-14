@@ -1,22 +1,18 @@
 # Sentinel UI
 
-An agentic interface and utility toolkit designed for vector retrieval, local model management, and interactive AI experimentation.
+The front gateway of the Sentinel stack: it authenticates requests (API key or JWT) and passes every prompt to
+[ai-sentinel](https://github.com/yurtseveronder-design/ai-sentinel) for a block-or-allow decision. The repository also
+holds small experimental helpers (a vector retriever, an agent loop, a Streamlit-style app) that are not part of the gateway.
 
-## What It Solves
-When building with local or agentic AI models, you need a straightforward command center to handle vector lookups, prompt toolkits, and autonomous loops without getting bogged down in heavy, complex UI frameworks.
+```
+client -> sentinel-ui (/api/v1/secure-inference) -> ai-sentinel (/v1/scan) -> sentinel-semantic
+```
 
-## Core Features
-* **Agentic Workflows (`agentic-flow/`):** Implements autonomous loops and task handling.
-* **Prompt Engineering Toolkit (`PromptEngineering-toolkit/`):** Modular templates and utilities for managing prompts.
-* **Vector Retrieval Utilities (`utils/`):** Custom embedding and retrieval functions built for local performance.
-* **Automated Testing & CI/CD:** Verified and tested continuously via GitHub Actions workflows.
+## What is here
 
-## Project Structure
-* `agentic-flow/`: Core autonomous agent logic and execution loops.
-* `PromptEngineering-toolkit/`: Reusable prompt templates and formatting tools.
-* `utils/`: Helper scripts for vector processing and environment handling.
-* `tests/`: Automated test suite for local validation.
-* `.github/workflows/`: CI pipeline configuration.
+* `gateway.py`, `auth.py`, `sentinel_client.py`, `logger.py`: the gateway (tested; see `tests/`).
+* `vector_retriever.py`, `agent.py`, `config.py`, `schemas.py`, `utils/`: experimental helpers with their own tests.
+* Install with `pip install .` (installs the modules above); run with `uvicorn gateway:app`.
 
 ## Gateway authentication
 `gateway.py` protects `/api/v1/secure-inference` with an API key (`x-api-key` header) or an HS256 JWT (`Authorization: Bearer ...`). Credentials are never stored in the code; set them as environment variables (see `.env.example`):
