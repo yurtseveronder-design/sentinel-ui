@@ -1,8 +1,11 @@
 """Client for the ai-sentinel gateway (the detection engine behind this front gateway).
 
 Enabled by AI_SENTINEL_URL (for example http://localhost:8000). Credentials come from
-AI_SENTINEL_API_KEY. Standard library only. Returns None when the service is not
-configured or cannot be reached, in which case the caller falls back to its local check.
+AI_SENTINEL_API_KEY. Standard library only.
+
+scan() returns None only when ai-sentinel is NOT configured (standalone mode). When it is
+configured, any failure to obtain a verdict (unreachable, timeout, 401, 429, 5xx, bad JSON)
+raises SentinelUnavailable: the caller must refuse the request, never wave it through.
 """
 
 import json
@@ -12,6 +15,10 @@ import urllib.request
 from typing import Any, Dict, Optional
 
 log = logging.getLogger("sentinel-ui")
+
+
+class SentinelUnavailable(RuntimeError):
+    """ai-sentinel is configured but did not give a usable verdict."""
 
 
 def enabled() -> bool:
@@ -34,7 +41,9 @@ def scan(prompt: str, request_id: Optional[str] = None) -> Optional[Dict[str, An
     try:
         timeout = float(os.environ.get("AI_SENTINEL_TIMEOUT", "3"))
         with urllib.request.urlopen(request, timeout=timeout) as response:  # nosec B310 - operator-configured URL
-            return json.loads(response.read().decode("utf-8"))
-    except Exception as exc:
-        log.warning("ai-sentinel unavailable, using local guardrail: %s", exc)
-        return None
+            verdict = json.loads(response.read().decode("utf-8"))
+    except Exception as exc:  # HTTPError covers 401/429/5xx: none of them is permission
+        raise SentinelUnavailable(f"{type(exc).__name__}: {exc}") from exc
+    if not isinstance(verdict, dict) or verdict.get("action") not in ("ALLOW", "BLOCK"):
+        raise SentinelUnavailable("ai-sentinel returned a response without a valid action")
+    return verdict
